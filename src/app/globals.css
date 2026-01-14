@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out forwards;
+}
+
+@layer utilities {
+  @keyframes progress {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(0%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .animate-progress-indeterminate {
+    animation: progress 1.5s ease-in-out infinite;
+  }
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+/* Hide scrollbar for IE, Edge and Firefox */
+.scrollbar-hide {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+@layer utilities {
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  .rotate-y-180 {
+    transform: rotateY(180deg);
+  }
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.perspective-1000 {
+  perspective: 1000px;
+}
+
+@layer utilities {
+  .animate-wave-slow {
+    animation: wave-move 8s ease-in-out infinite alternate;
+  }
+  .animate-wave-medium {
+    animation: wave-move 6s ease-in-out infinite alternate-reverse;
+  }
+  .animate-wave-fast {
+    animation: wave-move 4s ease-in-out infinite alternate;
+  }
+  
+  @keyframes wave-move {
+    0% { transform: translateX(-2%) scaleY(1); }
+    100% { transform: translateX(2%) scaleY(1.1); }
+  }
+}
+
+@keyframes bubble {
+  0% { transform: translateY(0); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(-100px); opacity: 0; }
+}
+
+.animate-bubble-1 { animation: bubble 4s ease-in infinite; animation-delay: 0s; }
+.animate-bubble-2 { animation: bubble 6s ease-in infinite; animation-delay: 2s; }
+.animate-bubble-3 { animation: bubble 5s ease-in infinite; animation-delay: 4s; }
+
+@keyframes shine {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
+}
+.animate-shine {
+  animation: shine 2s infinite;
+}
+
+/* Для 3D переворотов */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.preserve-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* globals.css */
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  height: 12px;
+  width: 12px;
+  border-radius: 50%;
+  background: white;
+  margin-top: -4px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+}
+input[type=range]::-webkit-slider-runnable-track {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+}
