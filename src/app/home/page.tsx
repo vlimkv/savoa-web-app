@@ -274,7 +274,7 @@ type CourseLite = {
 type ProgressSummary = { completedLessons: number; totalLessons: number };
 
 async function fetchCourseLite(token?: string | null): Promise<CourseLite> {
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://77.240.39.104/api";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://api.savoa.kz/api";
 
   const res = await fetch(`${API_BASE}/course/weeks`, {
     method: "GET",
@@ -316,7 +316,7 @@ async function fetchCourseLite(token?: string | null): Promise<CourseLite> {
 }
 
 async function fetchProgressSummary(token: string): Promise<ProgressSummary> {
-  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://77.240.39.104/api";
+  const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://api.savoa.kz/api";
 
   const res = await fetch(`${API_BASE}/progress`, {
     method: "GET",
@@ -401,7 +401,7 @@ export default function HomePage() {
       setTheoryErr(null);
 
       try {
-        const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://77.240.39.104/api";
+        const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://api.savoa.kz/api";
 
         const res = await fetch(`${API_BASE}/theory-lessons`, {
           method: "GET",

@@ -1,7 +1,7 @@
 // src/lib/progressApi.ts
 import type { BackendLessonProgress } from "./progress";
 
-const API_BASE = "http://77.240.39.104/api";
+const API_BASE = "https://api.savoa.kz/api";
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;

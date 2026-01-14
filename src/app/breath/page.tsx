@@ -52,7 +52,6 @@ export default function LuxuryBreathPage() {
     }
   }, []);
 
-  // Таймер
   useEffect(() => {
     let interval: NodeJS.Timeout;
     if (isRunning) {
@@ -67,7 +66,7 @@ export default function LuxuryBreathPage() {
 
   const nextPhase = () => {
     if (phase === "rest") {
-        if (cycle < 3) { // Всего 4 цикла (0, 1, 2, 3)
+        if (cycle < 3) {
             setCycle(c => c + 1);
             startPhase("inhale");
         } else {
@@ -163,7 +162,6 @@ export default function LuxuryBreathPage() {
             <Particles />
          </div>
       </motion.div>
-
 
       {/* 4. UI INTERFACE */}
       <div className="relative z-30 w-full h-screen flex flex-col justify-between p-6">

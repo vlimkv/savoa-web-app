@@ -9,7 +9,7 @@ import {
 import { ProPlayer, VideoSource } from "@/components/ProPlayer";
 import { useProgressSync } from "@/hooks/useProgressSync";
 
-const API_BASE = "http://77.240.39.104/api";
+const API_BASE = "https://api.savoa.kz/api";
 
 interface LessonDetail {
   id: string;

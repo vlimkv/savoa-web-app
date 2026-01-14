@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const UPSTREAM = process.env.UPSTREAM_API_BASE ?? "http://77.240.39.104/api";
+const UPSTREAM = process.env.UPSTREAM_API_BASE ?? "https://api.savoa.kz/api";
 
 async function handler(req: Request, ctx: { params: { path: string[] } }) {
   const { path } = ctx.params;

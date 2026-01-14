@@ -21,7 +21,7 @@ export default function ForgotPasswordPage() {
     setErr(null);
     setLoading(true);
 
-    const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "http://77.240.39.104/api";
+    const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? "https://api.savoa.kz/api";
 
     try {
       const res = await fetch(`${API_BASE}/auth/forgot-password`, {
