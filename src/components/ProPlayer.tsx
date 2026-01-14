@@ -107,6 +107,15 @@ export function ProPlayer({
     else v.pause();
   }, []);
 
+  const handleCenterPlay = useCallback((e: any) => {
+    e?.stopPropagation?.();   // ✅ чтобы контейнер не перехватывал тап
+    showUI();                 // ✅ показать контролы
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) v.play().catch(() => {});
+    else v.pause();
+  }, [showUI]);
+
   const skip = useCallback((seconds: number) => {
     const v = videoRef.current;
     if (!v) return;
@@ -368,7 +377,8 @@ export function ProPlayer({
       {!isPlaying && !isBuffering && (
         <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
           <div
-            onClick={togglePlay}
+            onClick={handleCenterPlay}
+            onTouchStart={(e) => e.stopPropagation()}
             className="interactive w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/10 flex items-center justify-center pointer-events-auto cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-2xl"
           >
             <Play className="w-8 h-8 text-white ml-1 fill-white" />

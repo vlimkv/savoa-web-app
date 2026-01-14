@@ -45,7 +45,7 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
   
   // Ambient State
   const [selectedAmbient, setSelectedAmbient] = useState<AmbientType>("none");
-  const [ambientVolume, setAmbientVolume] = useState(0.2);
+  const [ambientVolume, setAmbientVolume] = useState(0.06);
 
   // Refs
   const mainAudioRef = useRef<HTMLAudioElement | null>(null);
@@ -111,29 +111,42 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
 
   // --- AMBIENT HANDLERS ---
   useEffect(() => {
+    // стопаем старый
     if (ambientAudioRef.current) {
       ambientAudioRef.current.pause();
+      ambientAudioRef.current.src = "";
+      ambientAudioRef.current = null;
     }
 
-    if (selectedAmbient !== "none") {
-      const sound = AMBIENT_SOUNDS.find(s => s.id === selectedAmbient);
-      if (sound?.src) {
-        const amb = new Audio(sound.src);
-        amb.loop = true;
-        amb.volume = ambientVolume;
-        ambientAudioRef.current = amb;
-        
-        if (isPlaying) {
-             // Safe play for ambient too
-             amb.play().catch(e => { if(e.name !== 'AbortError') console.warn(e) });
-        }
-      }
+    if (selectedAmbient === "none") return;
+
+    const sound = AMBIENT_SOUNDS.find((s) => s.id === selectedAmbient);
+    if (!sound?.src) return;
+
+    const amb = new Audio(sound.src);
+    amb.loop = true;
+
+    // ✅ самый важный момент: применяем тихую громкость СРАЗУ
+    amb.volume = Math.max(0, Math.min(ambientVolume, 0.25));
+
+    ambientAudioRef.current = amb;
+
+    // ✅ играем только если основное играет
+    if (isPlaying) {
+      amb.play().catch((e: any) => {
+        if (e?.name !== "AbortError") console.warn("Ambient play error", e);
+      });
     }
-  }, [selectedAmbient]);
+
+    return () => {
+      amb.pause();
+      amb.src = "";
+    };
+  }, [selectedAmbient, isPlaying]); // важно: isPlaying тоже здесь
 
   useEffect(() => {
     if (ambientAudioRef.current) {
-      ambientAudioRef.current.volume = ambientVolume;
+      ambientAudioRef.current.volume = Math.max(0, Math.min(ambientVolume, 0.25));
     }
   }, [ambientVolume]);
 
@@ -370,11 +383,14 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
                         <div className="mt-8 bg-white/5 p-4 rounded-2xl">
                              <div className="flex items-center gap-4">
                                 <Volume2 size={16} className="text-white/50" />
-                                <input 
-                                    type="range" min="0" max="1" step="0.05"
-                                    value={ambientVolume}
-                                    onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
-                                    className="w-full accent-white h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
+                                <input
+                                  type="range"
+                                  min="0"
+                                  max="0.25"
+                                  step="0.01"
+                                  value={ambientVolume}
+                                  onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
+                                  className="w-full accent-white h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
                                 />
                              </div>
                         </div>
