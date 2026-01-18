@@ -45,7 +45,7 @@ export default function Navigation() {
       {/* ================================================= */}
       {/* 1. MOBILE: BOTTOM BAR (< 768px)                  */}
       {/* ================================================= */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/90 backdrop-blur-xl border-t border-white/10 pb-safe-area-bottom">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-black/90 backdrop-blur-xl border-t border-white/10 pb-[max(12px,env(safe-area-inset-bottom))]">
         <div className="flex justify-around items-center h-[52px] pb-1">
           {TABS.map((tab) => {
             const active = isActive(tab.href);

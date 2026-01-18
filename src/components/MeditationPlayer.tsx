@@ -33,6 +33,9 @@ const AMBIENT_SOUNDS = [
   { id: "rain", label: "Дождь", icon: CloudRain, src: "/sounds/ambient_rain.mp3" },
 ];
 
+const MAIN_FIXED_VOLUME = 0.65;   // попробуй 0.5–0.75
+const AMBIENT_FIXED_GAIN = 0.008; // iPhone обычно надо ниже
+
 export default function MeditationPlayer({ item, onClose }: PlayerProps) {
   if (!item) return null;
 
@@ -45,11 +48,35 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
   
   // Ambient State
   const [selectedAmbient, setSelectedAmbient] = useState<AmbientType>("none");
-  const [ambientVolume, setAmbientVolume] = useState(0.06);
 
   // Refs
   const mainAudioRef = useRef<HTMLAudioElement | null>(null);
   const ambientAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const ambientCtxRef = useRef<AudioContext | null>(null);
+  const ambientGainRef = useRef<GainNode | null>(null);
+  const ambientSrcNodeRef = useRef<MediaElementAudioSourceNode | null>(null);
+
+  const ensureAmbientGraph = (amb: HTMLAudioElement) => {
+	  const Ctx = (window.AudioContext || (window as any).webkitAudioContext) as typeof AudioContext;
+
+	  if (!ambientCtxRef.current) {
+	    ambientCtxRef.current = new Ctx();
+	  }
+	  const ctx = ambientCtxRef.current!;
+
+	  if (!ambientGainRef.current) {
+	    ambientGainRef.current = ctx.createGain();
+	    ambientGainRef.current.connect(ctx.destination);
+	  }
+
+	  // Новый amb => новый source node
+	  ambientSrcNodeRef.current?.disconnect();
+	  ambientSrcNodeRef.current = ctx.createMediaElementSource(amb);
+	  ambientSrcNodeRef.current.connect(ambientGainRef.current);
+
+	  return ctx;
+  };
 
   // --- COLORS ---
   const getColors = () => {
@@ -67,6 +94,11 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
     // 1. Создаем аудио
     const audio = new Audio(item.audioUrl);
     mainAudioRef.current = audio;
+    
+    audio.volume = MAIN_FIXED_VOLUME;
+    audio.preload = "auto";
+    (audio as any).playsInline = true;
+    (audio as any).webkitPlaysInline = true;
 
     // 2. Слушатели
     const updateHandler = () => {
@@ -109,47 +141,68 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
     };
   }, [item]); // Перезапуск только при смене item
 
-  // --- AMBIENT HANDLERS ---
   useEffect(() => {
-    // стопаем старый
-    if (ambientAudioRef.current) {
-      ambientAudioRef.current.pause();
-      ambientAudioRef.current.src = "";
-      ambientAudioRef.current = null;
-    }
+	  // стопаем старый эмбиент
+	  if (ambientAudioRef.current) {
+	    ambientAudioRef.current.pause();
+	    ambientAudioRef.current.src = "";
+	    ambientAudioRef.current = null;
+	  }
+	  ambientSrcNodeRef.current?.disconnect();
+	  ambientSrcNodeRef.current = null;
 
-    if (selectedAmbient === "none") return;
+	  if (selectedAmbient === "none") return;
 
-    const sound = AMBIENT_SOUNDS.find((s) => s.id === selectedAmbient);
-    if (!sound?.src) return;
+	  const sound = AMBIENT_SOUNDS.find((s) => s.id === selectedAmbient);
+	  if (!sound?.src) return;
 
-    const amb = new Audio(sound.src);
-    amb.loop = true;
+	  const amb = new Audio(sound.src);
+	  amb.loop = true;
+	  amb.preload = "auto";
 
-    // ✅ самый важный момент: применяем тихую громкость СРАЗУ
-    amb.volume = Math.max(0, Math.min(ambientVolume, 0.25));
+	  // важно: оставляем volume=1, управляем ТОЛЬКО через gain
+	  amb.volume = 1;
 
-    ambientAudioRef.current = amb;
+	  ambientAudioRef.current = amb;
 
-    // ✅ играем только если основное играет
-    if (isPlaying) {
-      amb.play().catch((e: any) => {
-        if (e?.name !== "AbortError") console.warn("Ambient play error", e);
-      });
-    }
+	  // подключаем WebAudio граф
+	  const ctx = ensureAmbientGraph(amb);
 
-    return () => {
-      amb.pause();
-      amb.src = "";
-    };
-  }, [selectedAmbient, isPlaying]); // важно: isPlaying тоже здесь
+	  // ставим нужный гейн сразу
+	  if (ambientGainRef.current) {
+	    ambientGainRef.current.gain.value = getAmbientGain();
+	  }
+
+	  if (isPlaying) {
+		  ctx.resume().catch(() => {});
+		  if (ambientGainRef.current) ambientGainRef.current.gain.value = 0;
+
+		  amb.play()
+		    .then(() => {
+		      if (ambientGainRef.current) {
+		        ambientGainRef.current.gain.value = getAmbientGain();
+		      }
+		    })
+		    .catch((e: any) => {
+		      if (e?.name !== "AbortError") console.warn("Ambient play error", e);
+		    });
+	  }
+
+	  return () => {
+	    amb.pause();
+	    amb.src = "";
+	    ambientSrcNodeRef.current?.disconnect();
+	    ambientSrcNodeRef.current = null;
+	  };
+  }, [selectedAmbient, isPlaying]);
 
   useEffect(() => {
-    if (ambientAudioRef.current) {
-      ambientAudioRef.current.volume = Math.max(0, Math.min(ambientVolume, 0.25));
+    if (ambientGainRef.current) {
+      ambientGainRef.current.gain.value = getAmbientGain();
     }
-  }, [ambientVolume]);
+  }, [isPlaying]);
 
+  const getAmbientGain = () => (isPlaying ? AMBIENT_FIXED_GAIN : 0);
   // --- CONTROLS ---
 
   const togglePlay = async () => {
@@ -160,14 +213,23 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
       ambientAudioRef.current?.pause();
       setIsPlaying(false);
     } else {
-      try {
-        await mainAudioRef.current.play();
-        ambientAudioRef.current?.play();
-        setIsPlaying(true);
-      } catch (err: any) {
-        if (err.name !== "AbortError") console.error(err);
-      }
-    }
+	  try {
+	    // разбудить контекст на iOS
+	    await ambientCtxRef.current?.resume().catch(() => {});
+
+            mainAudioRef.current.volume = MAIN_FIXED_VOLUME;
+	    await mainAudioRef.current.play();
+
+	    if (ambientAudioRef.current) {
+	      // гейн уже выставлен эффектами, просто play
+	      await ambientAudioRef.current.play();
+	    }
+
+	    setIsPlaying(true);
+	  } catch (err: any) {
+	    if (err.name !== "AbortError") console.error(err);
+	  }
+     }
   };
 
   const seek = (seconds: number) => {
@@ -199,6 +261,11 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
       transition={{ duration: 0.4, ease: [0.32, 0.72, 0, 1] }}
       className="fixed inset-0 z-[100] bg-black text-white flex flex-col overflow-hidden"
     >
+      {/* iOS safe-area top fill (Dynamic Island / notch) */}
+      <div
+        className="fixed top-0 left-0 right-0 z-[200] bg-black"
+        style={{ height: "env(safe-area-inset-top)" }}
+      />
       {/* BACKGROUND GRADIENT */}
       <div className="absolute inset-0 z-0">
          <div className={`absolute top-1/4 left-1/4 w-[300px] h-[300px] ${colors.orb} rounded-full blur-[120px] opacity-20`} />
@@ -379,22 +446,6 @@ export default function MeditationPlayer({ item, onClose }: PlayerProps) {
                             )
                         })}
                     </div>
-                    {selectedAmbient !== 'none' && (
-                        <div className="mt-8 bg-white/5 p-4 rounded-2xl">
-                             <div className="flex items-center gap-4">
-                                <Volume2 size={16} className="text-white/50" />
-                                <input
-                                  type="range"
-                                  min="0"
-                                  max="0.25"
-                                  step="0.01"
-                                  value={ambientVolume}
-                                  onChange={(e) => setAmbientVolume(parseFloat(e.target.value))}
-                                  className="w-full accent-white h-1 bg-white/20 rounded-full appearance-none cursor-pointer"
-                                />
-                             </div>
-                        </div>
-                    )}
                 </motion.div>
             </motion.div>
         )}
@@ -443,3 +494,4 @@ function Particles({ ambient, isPlaying }: { ambient: string, isPlaying: boolean
     }
     return null;
 }
+
