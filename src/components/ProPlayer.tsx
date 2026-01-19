@@ -78,6 +78,7 @@ export function ProPlayer({
 
   const [hasAirPlay, setHasAirPlay] = useState(false);
   const [hasPiP, setHasPiP] = useState(false);
+  const [previewTime, setPreviewTime] = useState<number | null>(null);
 
   const safari = useMemo(() => isSafariLike(), []);
 
@@ -108,13 +109,14 @@ export function ProPlayer({
   }, []);
 
   const handleCenterPlay = useCallback((e: any) => {
-    e?.stopPropagation?.();   // ✅ чтобы контейнер не перехватывал тап
-    showUI();                 // ✅ показать контролы
+    e?.preventDefault?.();
+    e?.stopPropagation?.();
+    showUI();
     const v = videoRef.current;
     if (!v) return;
-    if (v.paused) v.play().catch(() => {});
-    else v.pause();
+    v.play().catch(() => {});
   }, [showUI]);
+
 
   const skip = useCallback((seconds: number) => {
     const v = videoRef.current;
@@ -129,77 +131,64 @@ export function ProPlayer({
     window.setTimeout(() => setSeekOverlay(null), 550);
   }, [duration, showUI]);
 
-  const handleTimelineDrag = useCallback((e: MouseEvent | TouchEvent) => {
+  const dragPointerId = useRef<number | null>(null);
+
+  const seekToClientX = useCallback((clientX: number, commit: boolean) => {
     const bar = progressBarRef.current;
     const v = videoRef.current;
     if (!bar || !v) return;
 
     const rect = bar.getBoundingClientRect();
-    const clientX =
-      "touches" in e ? e.touches[0]?.clientX ?? 0 : (e as MouseEvent).clientX;
-
     const percent = Math.min(Math.max((clientX - rect.left) / rect.width, 0), 1);
     const d = Number.isFinite(duration) && duration > 0 ? duration : v.duration || 0;
     const next = percent * (d || 0);
 
-    setCurrentTime(next);
-    if (isDragging) v.currentTime = next;
-  }, [duration, isDragging]);
+    if (commit) {
+      v.currentTime = next;
+      setCurrentTime(next);
+      setPreviewTime(null);
+    } else {
+      setPreviewTime(next);
+    }
+  }, [duration]);
 
-  const startDrag = useCallback(() => {
-    setIsDragging(true);
+
+  const onTimelinePointerDown = useCallback((e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     showUI();
-  }, [showUI]);
 
-  const stopDrag = useCallback(() => {
+    setIsDragging(true);
+    dragPointerId.current = e.pointerId;
+
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+
+    seekToClientX(e.clientX, false);
+  }, [seekToClientX, showUI]);
+
+  const onTimelinePointerMove = useCallback((e: React.PointerEvent) => {
+    if (!isDragging) return;
+    if (dragPointerId.current !== e.pointerId) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    seekToClientX(e.clientX, false);
+  }, [isDragging, seekToClientX]);
+
+  const onTimelinePointerUp = useCallback((e: React.PointerEvent) => {
+    if (dragPointerId.current !== e.pointerId) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    seekToClientX(e.clientX, true);
+    dragPointerId.current = null;
     setIsDragging(false);
     showUI();
-  }, [showUI]);
-
-  useEffect(() => {
-    if (!isDragging) return;
-
-    window.addEventListener("mousemove", handleTimelineDrag);
-    window.addEventListener("touchmove", handleTimelineDrag, { passive: true });
-    window.addEventListener("mouseup", stopDrag);
-    window.addEventListener("touchend", stopDrag);
-
-    return () => {
-      window.removeEventListener("mousemove", handleTimelineDrag);
-      window.removeEventListener("touchmove", handleTimelineDrag);
-      window.removeEventListener("mouseup", stopDrag);
-      window.removeEventListener("touchend", stopDrag);
-    };
-  }, [isDragging, handleTimelineDrag, stopDrag]);
+  }, [seekToClientX, showUI]);
 
   const isTouchDevice = () =>
     typeof window !== "undefined" &&
     ("ontouchstart" in window || navigator.maxTouchPoints > 0);
-
-  const handleContainerClick = (e: React.MouseEvent) => {
-    const target = e.target as HTMLElement;
-    if (target.closest("button") || target.closest(".interactive")) return;
-
-    if (isTouchDevice()) {
-      setShowControls((v) => !v);
-      return;
-    }
-
-    const now = Date.now();
-    const rect = containerRef.current?.getBoundingClientRect();
-
-    if (now - lastTapRef.current.time < 300 && rect) {
-      const x = e.clientX - rect.left;
-      if (x < rect.width / 3) skip(-10);
-      else if (x > (rect.width * 2) / 3) skip(10);
-      else togglePlay();
-    } else {
-      setShowControls((v) => !v);
-    }
-
-    lastTapRef.current = { time: now, x: e.clientX };
-  };
-
 
   // --- Video setup: HLS + events + AirPlay + PiP + fullscreen state
   useEffect(() => {
@@ -343,9 +332,33 @@ export function ProPlayer({
     <div
       ref={containerRef}
       className={`relative w-full h-full bg-black overflow-hidden select-none ${className}`}
+      style={{ touchAction: "manipulation" }}
       onMouseMove={showUI}
       onTouchStart={showUI}
-      onClick={handleContainerClick}
+      onPointerDownCapture={(e) => {
+        const t = e.target as HTMLElement;
+        if (t.closest(".interactive") || t.closest("button")) return;
+
+        // мобила: тап = показать/скрыть
+        if (isTouchDevice()) {
+          setShowControls((v) => !v);
+          return;
+        }
+
+        // десктоп: двойной тап для skip/play
+        const now = Date.now();
+        const rect = containerRef.current?.getBoundingClientRect();
+        if (now - lastTapRef.current.time < 300 && rect) {
+          const x = (e as any).clientX - rect.left;
+          if (x < rect.width / 3) skip(-10);
+          else if (x > (rect.width * 2) / 3) skip(10);
+          else togglePlay();
+        } else {
+          setShowControls((v) => !v);
+        }
+
+        lastTapRef.current = { time: now, x: (e as any).clientX ?? 0 };
+      }}
     >
       <video
         ref={videoRef}
@@ -375,19 +388,28 @@ export function ProPlayer({
       )}
 
       {!isPlaying && !isBuffering && (
-        <div className="absolute inset-0 flex items-center justify-center z-20 pointer-events-none">
+        <div className="absolute inset-0 flex items-center justify-center z-[60]">
           <div
-            onClick={handleCenterPlay}
-            onTouchStart={(e) => e.stopPropagation()}
-            className="interactive w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/10 flex items-center justify-center pointer-events-auto cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-2xl"
+            className="interactive center-play w-20 h-20 rounded-full bg-white/20 backdrop-blur-xl border border-white/10 flex items-center justify-center cursor-pointer hover:scale-110 active:scale-95 transition-all shadow-2xl"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              showUI();
+              videoRef.current?.play().catch(() => {});
+            }}
           >
             <Play className="w-8 h-8 text-white ml-1 fill-white" />
           </div>
         </div>
       )}
 
-      <div className={`absolute inset-0 z-50 flex flex-col justify-between transition-all duration-300 ${showControls ? "opacity-100 visible" : "opacity-0 invisible"}`}>
-        <div className="h-32 bg-gradient-to-b from-black/80 to-transparent p-6 flex justify-between items-start">
+      <div
+        className={`absolute inset-0 z-50 flex flex-col justify-between transition-all duration-300
+          ${showControls ? "opacity-100 visible" : "opacity-0 invisible"}
+          pointer-events-none
+        `}
+      >
+        <div className="pointer-events-auto h-32 bg-gradient-to-b from-black/80 to-transparent p-6 flex justify-between items-start">
           {onBack && (
             <button onClick={onBack} className="interactive w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center hover:bg-white/20 transition-colors">
               <ChevronLeft size={24} color="white" />
@@ -396,12 +418,15 @@ export function ProPlayer({
           {title && <h3 className="text-white/90 font-medium text-sm tracking-wide drop-shadow-md hidden md:block">{title}</h3>}
         </div>
 
-        <div className="bg-gradient-to-t from-black/95 via-black/60 to-transparent px-6 pb-8 pt-20 space-y-4">
+        <div className="pointer-events-auto bg-gradient-to-t from-black/95 via-black/60 to-transparent px-6 pb-8 pt-20 space-y-4">
           <div
             ref={progressBarRef}
             className="interactive group/time relative h-6 flex items-center cursor-pointer"
-            onMouseDown={startDrag}
-            onTouchStart={startDrag}
+            style={{ touchAction: "none" }}
+            onPointerDown={onTimelinePointerDown}
+            onPointerMove={onTimelinePointerMove}
+            onPointerUp={onTimelinePointerUp}
+            onPointerCancel={onTimelinePointerUp}
           >
             <div className="absolute w-full h-1 bg-white/20 rounded-full overflow-hidden group-hover/time:h-1.5 transition-all">
               <div className="absolute h-full bg-white/30" style={{ width: `${Math.max(0, Math.min(100, bufferedPct))}%` }} />

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useMemo } from "react";
 import {
   User, Play, Sparkles, Wind, Heart, Activity, Moon, Sun,
-  ArrowUpRight, Clock, PlayCircle
+  ArrowUpRight, Clock, PlayCircle, Mic
 } from "lucide-react";
 import ProfileModal from "@/components/ProfileModal";
 import MeditationPlayer, { MeditationItem } from "@/components/MeditationPlayer";
@@ -24,6 +24,64 @@ type TheoryLessonDTO = {
   order_index?: number | null;
   is_active?: boolean | null;
 };
+
+// --- PODCASTS DATA ---
+const PODCASTS: MeditationItem[] = [
+  {
+    id: "pod1",
+    title: "Ресурсное мышление",
+    subtitle: "Эпизод 01",
+    duration: "21 мин",
+    durationSec: 1247,
+    category: "Podcast" as any, 
+    icon: Mic,
+    audioUrl: "/sounds/podcast_01.mp3",
+    benefits: [
+      "Начинаю мыслить ресурсно",
+      "Учуcь не спасать других",
+      "Сохраняю энергию и границы",
+      "Возвращаюсь в состояние здесь и сейчас",
+      "Принимаю решения спокойнее",
+    ],
+    description: "В этом выпуске делюсь своими простыми принципами ресурсного мышления. Про границы, про то, как не брать на себя чужие задачи и как возвращать себе энергию через смыслы и спокойные решения.",
+  },
+  {
+    id: "pod2",
+    title: "Дневник самопрограммирования",
+    subtitle: "Эпизод 02",
+    duration: "6 мин",
+    durationSec: 386,
+    category: "Podcast" as any,
+    icon: Mic,
+    audioUrl: "/sounds/podcast_02.mp3",
+    benefits: [
+      "Понимаю, как работает самопрограммирование",
+      "Навожу порядок в мыслях",
+      "Учуcь держать фокус",
+      "Соединяю мысли и действия",
+      "Возвращаю контакт с телом",
+    ],
+    description: "В этом выпуске я рассказываю, как вести дневник самопрограммирования так, чтобы он реально работал. Про фокус, внимание, действия и состояние, из которого всё начинает складываться.",
+  },
+  {
+    id: "pod3",
+    title: "Про Стресс",
+    subtitle: "Эпизод 03",
+    duration: "6 мин",
+    durationSec: 407,
+    category: "Podcast" as any,
+    icon: Mic,
+    audioUrl: "/sounds/podcast_03.mp3",
+    benefits: [
+      "Понимаю, что стресс со мной делает",
+      "Учусь быстрее успокаивать тело",
+      "Вспоминаю про дыхание как опору",
+      "Собираю свой антистресс-ритуал",
+      "Ставлю сон и питание в приоритет",
+    ],
+    description: "В этом выпуске я простым языком объясняю, что такое стресс и почему важно с ним работать. Делюсь тем, что помогает мне: дыхание, мягкие практики, сон и небольшие ежедневные ритуалы.",
+  },
+];
 
 // Эти данные соответствуют Swift MeditationItem
 const MEDITATIONS: MeditationItem[] = [
@@ -66,6 +124,43 @@ const MEDITATIONS: MeditationItem[] = [
     description: "Начните день без спешки — с ясностью, вниманием и ощущением внутренней опоры.",
   },
 ];
+
+// --- COMPONENTS (SHARED) ---
+
+// Компонент подкаста (общий)
+function PodcastRow({ item, onClick }: { item: MeditationItem; onClick: () => void }) {
+  return (
+    <div
+      onClick={onClick}
+      className="group flex items-center justify-between p-3 rounded-xl bg-[#1A1A1A] border border-white/5 cursor-pointer hover:border-white/20 hover:bg-[#222] transition-all duration-300 active:scale-[0.98]"
+    >
+      <div className="flex items-center gap-3">
+        {/* Иконка Play */}
+        <div className="relative w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500/20 to-purple-600/20 border border-white/5 flex items-center justify-center group-hover:scale-105 transition-transform">
+          <Play size={14} fill="white" className="ml-0.5 text-white/90" />
+        </div>
+        
+        <div className="flex flex-col">
+          <h4 className="text-xs font-bold text-white leading-tight group-hover:text-purple-200 transition-colors">
+            {item.title}
+          </h4>
+          <div className="flex items-center gap-2 mt-0.5">
+             <span className="text-[9px] font-bold text-white/40 uppercase tracking-wider">
+               {item.duration}
+             </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Анимация (статика) */}
+      <div className="flex gap-0.5 items-end h-3 opacity-30 group-hover:opacity-100 transition-opacity">
+        <div className="w-0.5 h-1.5 bg-white rounded-full animate-pulse" />
+        <div className="w-0.5 h-3 bg-white rounded-full animate-pulse delay-75" />
+        <div className="w-0.5 h-2 bg-white rounded-full animate-pulse delay-150" />
+      </div>
+    </div>
+  );
+}
 
 // --- COMPONENTS (MOBILE) ---
 function QuickAction({ icon: Icon, title, color, href }: any) {
@@ -605,17 +700,34 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="bg-[#121212] border border-white/5 rounded-[24px] p-5 flex-1 min-h-[200px] flex flex-col">
+          <div className="bg-[#121212] border border-white/5 rounded-[24px] p-5 flex flex-col shrink-0">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest">Медитации</h3>
             </div>
 
-            <div className="flex-1 space-y-1">
+            <div className="space-y-1">
               {MEDITATIONS.map((item) => (
-                <DesktopMeditationRow key={item.id} item={item} onClick={() => setSelectedMeditation(item)} />
+                <DesktopMeditationRow
+                  key={item.id}
+                  item={item}
+                  onClick={() => setSelectedMeditation(item)}
+                />
               ))}
             </div>
           </div>
+
+          {/* НОВЫЙ БЛОК: ПОДКАСТЫ (DESKTOP) - Теперь в красивом контейнере */}
+          <div className="bg-[#121212] border border-white/5 rounded-[24px] p-5 mt-2">
+             <div className="flex items-center justify-between mb-3">
+               <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest">Подкасты</h3>
+             </div>
+             <div className="flex flex-col gap-2">
+                {PODCASTS.map(pod => (
+                  <PodcastRow key={pod.id} item={pod} onClick={() => setSelectedMeditation(pod)} />
+                ))}
+             </div>
+          </div>
+
         </div>
       </div>
 
@@ -687,7 +799,7 @@ export default function HomePage() {
         </div>
 
         {/* content two columns */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-4 mb-6">
           {/* Theory */}
           <div className="bg-[#0b0b0b] border border-white/5 rounded-[28px] p-5">
             <div className="flex items-center justify-between mb-4">
@@ -723,6 +835,16 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* НОВЫЙ БЛОК: ПОДКАСТЫ (TABLET) */}
+        <div className="mb-6">
+           <h3 className="text-xs font-bold text-white/40 uppercase tracking-widest mb-3">Подкасты</h3>
+           <div className="grid grid-cols-1 gap-3">
+              {PODCASTS.map(pod => (
+                <PodcastRow key={pod.id} item={pod} onClick={() => setSelectedMeditation(pod)} />
+              ))}
+           </div>
         </div>
       </div>
 
@@ -800,6 +922,19 @@ export default function HomePage() {
               ))}
             </div>
           </div>
+
+          {/* НОВЫЙ БЛОК: ПОДКАСТЫ (MOBILE) */}
+          <div className="px-5 pb-8">
+             <div className="flex items-center justify-between mb-4">
+               <h3 className="text-lg font-bold">Подкасты</h3>
+             </div>
+             <div className="flex flex-col gap-3">
+                {PODCASTS.map(pod => (
+                  <PodcastRow key={pod.id} item={pod} onClick={() => setSelectedMeditation(pod)} />
+                ))}
+             </div>
+          </div>
+
         </div>
       </div>
     </main>
