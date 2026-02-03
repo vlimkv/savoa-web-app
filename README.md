@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Savoa Web App (Course Platform)
 
-## Getting Started
+**A specialized web application for delivering educational content and media streams.**
 
-First, run the development server:
+This project serves as the frontend for the Savoa educational course. It features a custom-built media player for podcasts, optimized content navigation, and a responsive interface for learning on the go.
+
+![Status](https://img.shields.io/badge/Status-Production-success)
+![Next.js](https://img.shields.io/badge/Next.js-black?style=flat&logo=next.js&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
+
+## 🚀 Key Features
+
+* **Custom Media Player:** Integrated audio/video player for seamless podcast and lesson streaming (`/src/player`).
+* **Course Navigation:** Intuitive routing and layout for navigating through course modules.
+* **Responsive Design:** Fully optimized mobile and desktop experience using Tailwind CSS.
+* **Performance:** Static generation and optimized assets for fast content loading.
+
+## 🛠 Tech Stack
+
+* **Framework:** Next.js 14+ (App Router)
+* **Language:** TypeScript
+* **Styling:** Tailwind CSS
+* **Media Handling:** Custom HTML5 Audio/Video implementation
+
+## 📂 Project Structure
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+├── app/            # Course pages and layouts
+├── components/     # UI components (Player, LessonCard, etc.)
+├── public/         # Static media assets
+├── src/            # Core logic and player state management
+├── types/          # TypeScript definitions for course data
+└── ...config       # Configuration files
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+##⚠️ Disclaimer
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**This project is part of a commercial educational product. Source code is published for portfolio demonstration purposes only. Content and methodologies are proprietary.**
