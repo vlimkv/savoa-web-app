@@ -1,36 +1,52 @@
-# Savoa Web App (Course Platform)
+# Savoa Wellness App (PWA)
 
-**A specialized web application for delivering educational content and media streams.**
+**A comprehensive wellness and meditation Progressive Web App (PWA) built with Next.js.**
 
-This project serves as the frontend for the Savoa educational course. It features a custom-built media player for podcasts, optimized content navigation, and a responsive interface for learning on the go.
+This application serves as a personal mental health companion, featuring guided meditations, breathwork exercises, gratitude journaling, and progress tracking. Engineered as a PWA for an app-like experience on mobile devices with offline capabilities.
 
 ![Status](https://img.shields.io/badge/Status-Production-success)
+![PWA](https://img.shields.io/badge/PWA-Supported-purple?style=flat&logo=pwa&logoColor=white)
 ![Next.js](https://img.shields.io/badge/Next.js-black?style=flat&logo=next.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=flat&logo=typescript&logoColor=white)
 
-## 🚀 Key Features
+## 📱 Key Features
 
-* **Custom Media Player:** Integrated audio/video player for seamless podcast and lesson streaming (`/src/player`).
-* **Course Navigation:** Intuitive routing and layout for navigating through course modules.
-* **Responsive Design:** Fully optimized mobile and desktop experience using Tailwind CSS.
-* **Performance:** Static generation and optimized assets for fast content loading.
+* **Offline-First PWA:** Fully installable via `next-pwa`, with service workers (`sw.js`) and caching strategies for offline access.
+* **Media & Meditation:** Custom audio players (`ProPlayer`, `MeditationPlayer`) for streaming guided sessions.
+* **Interactive Tools:**
+    * 🌬️ **Breathwork:** Interactive UI for breathing exercises (`/app/breath`).
+    * ✨ **Affirmations:** Daily positive affirmations (`/app/affirmation`).
+    * 📖 **Gratitude Journal:** Built-in journaling interface (`/app/gratitude`).
+* **Progress Tracking:** Local-first state management with cloud synchronization (`useProgressSync`, `useLocalStorage`).
+* **Secure Auth:** Protected routes via `AuthGate` component and proxy-based API communication.
 
 ## 🛠 Tech Stack
 
-* **Framework:** Next.js 14+ (App Router)
+* **Framework:** Next.js (App Router)
 * **Language:** TypeScript
-* **Styling:** Tailwind CSS
-* **Media Handling:** Custom HTML5 Audio/Video implementation
+* **PWA:** `next-pwa`, Workbox
+* **State Management:** Zustand (implied by `store` structure)
+* **Styling:** Tailwind CSS / PostCSS
+* **API Strategy:** Next.js API Routes for secure proxying (`/api/proxy`)
 
 ## 📂 Project Structure
 
 ```bash
-├── app/            # Course pages and layouts
-├── components/     # UI components (Player, LessonCard, etc.)
-├── public/         # Static media assets
-├── src/            # Core logic and player state management
-├── types/          # TypeScript definitions for course data
-└── ...config       # Configuration files
+├── public/             # Static assets, PWA manifest, and service workers
+├── src/
+│   ├── api/proxy/      # Secure API proxy to backend services
+│   ├── app/            # App Router: logic for specific features
+│   │   ├── affirmation # Daily affirmations logic
+│   │   ├── breath/     # Breathwork interface
+│   │   ├── gratitude/  # Journaling feature
+│   │   ├── program/    # Educational course structure
+│   │   ├── tracker/    # User progress dashboard
+│   │   └── ...auth     # Login/Reset flow
+│   ├── components/     # Reusable UI (Players, AuthGate, Navigation)
+│   ├── hooks/          # Custom hooks (Sync, LocalStorage)
+│   ├── lib/            # Utilities (Auth, API clients)
+│   └── store/          # Global state management
+└── ...config files
 ```
 
 ##⚠️ Disclaimer
