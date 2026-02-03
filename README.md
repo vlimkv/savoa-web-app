@@ -49,6 +49,6 @@ This application serves as a personal mental health companion, featuring guided 
 └── ...config files
 ```
 
-##⚠️ Disclaimer
+## ⚠️ Disclaimer
 
 **This project is part of a commercial educational product. Source code is published for portfolio demonstration purposes only. Content and methodologies are proprietary.**
